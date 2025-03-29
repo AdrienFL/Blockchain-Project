@@ -26,6 +26,7 @@ public class Process extends UntypedAbstractActor {
     private int estimate;
     private HashMap<ActorRef, Pair> states = new HashMap<>(); 
     private HashMap<Integer, Integer> ackMajorityMap = new HashMap<>();
+    private boolean silentMode = false;
 
     public Process(int ID, int nb) {
         N = nb;
@@ -186,21 +187,26 @@ public class Process extends UntypedAbstractActor {
          
     }
 
-    private void decideReceived(int proposal) {
-        log.info("decide received " + self().path().name() + " with proposal " + proposal);
-        for (ActorRef m : processes.references){
-            if(m != self()){
-                m.tell(new DecideMsg(proposal), self());
+    private void decideReceived(int newProposal) {
+        log.info("decide received " + self().path().name() + " with proposal " + newProposal);
+        if(!silentMode){
+            for (ActorRef m : processes.references){
+                if(m != self()){
+                    m.tell(new DecideMsg(newProposal), self());
+                }
             }
         }
-        log.info("decided " + self().path().name() + " with proposal " + proposal);
-       
+        log.info("decided " + newProposal);
+        silentMode = true;
     }
 
     private void ackMajorityReceived() {
         log.info("ackmajority received " + self().path().name() + " with ballot " + ballot);
+
+        if(!silentMode){
         for (ActorRef m : processes.references){
             m.tell(new DecideMsg(proposal), self());
         }
+    }
     }
 }

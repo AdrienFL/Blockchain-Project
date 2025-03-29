@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 
 public class Main {
 
-    public static int N = 10;
+    public static int N = 4;
 
 
     public static void main(String[] args) throws InterruptedException {
@@ -31,9 +31,9 @@ public class Main {
         }
 
         for(ActorRef actor : references){
-            //actor.tell("launch", ActorRef.noSender());
+            actor.tell("launch", ActorRef.noSender());
         }
-        references.get(0).tell("launch", ActorRef.noSender());
+        
        
     }
 }
