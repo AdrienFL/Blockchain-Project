@@ -29,7 +29,7 @@ public class Main {
         for (ActorRef actor : references) {
             actor.tell(m, ActorRef.noSender());
         }
-
+        
         for(ActorRef actor : references){
             actor.tell("launch", ActorRef.noSender());
         }
