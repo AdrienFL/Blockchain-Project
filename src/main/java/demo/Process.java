@@ -1,6 +1,7 @@
 package demo;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -54,7 +55,7 @@ public class Process extends UntypedAbstractActor {
         if (this.faultprone && !this.silentMode){
             Random r = new Random();
             if(r.nextDouble() < alpha){
-                //log.info("p" + self().path().name() + " crashed");
+                log.info("p" + self().path().name() + " crashed");
                 this.silentMode = true;
             }
         }
@@ -153,7 +154,7 @@ public class Process extends UntypedAbstractActor {
                 this.mayCrash();
                 m.tell(new ReadMsg(this.ballot), self());
             }
-            getContext().system().scheduler().scheduleOnce(Duration.ofMillis(new Random().nextInt(0, 1)), getSelf(), "propose", getContext().system().dispatcher(), ActorRef.noSender());
+            getContext().system().scheduler().scheduleOnce(Duration.ofMillis(new Random().nextInt(10)), getSelf(), "propose", getContext().system().dispatcher(), ActorRef.noSender());
         }
     }
 
@@ -247,6 +248,21 @@ public class Process extends UntypedAbstractActor {
 
                 }
             }
+
+            if(m.equals("reset")){
+
+                log.info("p" + self().path().name() + " reset");
+                this.abortList.clear();
+                this.states.clear();
+                this.ackMajorityMap.clear();
+                this.silentMode = false;
+                this.faultprone = false;
+                this.alpha = 0;
+                this.proposemode = true;
+                this.readballot = 0;
+                this.imposeballot = id - N;
+                this.ballot = id - N;
+            }
         }
 
 
@@ -267,6 +283,8 @@ public class Process extends UntypedAbstractActor {
             this.proposemode = false;
             log.info("\n-------------------------------------\n" + //
                                 "p" + self().path().name() + " DECIDED " + newProposal + "\n" + "--------------------------------");
+
+            Main.notifyDecision();
 
         }
 
