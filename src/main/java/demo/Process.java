@@ -50,12 +50,12 @@ public class Process extends UntypedAbstractActor {
     }
     
     private void abortReceived(int newBallot, ActorRef pj){
-        log.info("abort received " + self().path().name() + " from " + pj.path().name() + " with ballot " + newBallot);
+        log.info("abort received from " + pj.path().name() + " with ballot " + newBallot);
         return;
     }
     
     private void readReceived(int newBallot, ActorRef pj) {
-            log.info("read received " + self().path().name() + " from " + pj.path().name() + " with ballot " + newBallot);
+            log.info("read received from " + pj.path().name() + " with ballot " + newBallot);
             if (readballot > newBallot || imposeballot > newBallot) {
                 readballot = newBallot;
                 pj.tell(new AbortMsg(newBallot), self());
@@ -66,7 +66,7 @@ public class Process extends UntypedAbstractActor {
     }
 
     private void gatherReceived(int newBallot, int estballot, int est, ActorRef pj){
-        log.info("gather received " + self().path().name() + " from " + getSender().path().name() + " with ballot " + newBallot);
+        log.info("gather received from " + getSender().path().name() + " with ballot " + newBallot);
         states.put(pj, new Pair(est, estballot));
         if (states.size()>=N/2){
             getContext().system().scheduler().scheduleOnce(Duration.ofMillis(1000), getSelf(), "majority", getContext().system().dispatcher(), ActorRef.noSender());
@@ -74,7 +74,7 @@ public class Process extends UntypedAbstractActor {
     }
 
     private void ackReceived(int ballot, ActorRef pj){
-        log.info("ack received " + self().path().name() + " from " + pj.path().name() + " with ballot " + ballot);
+        log.info("ack received from " + pj.path().name() + " with ballot " + ballot);
         if (ackMajorityMap.containsKey(ballot)){
             ackMajorityMap.put(ballot, ackMajorityMap.get(ballot)+1);
         } else {
@@ -86,7 +86,7 @@ public class Process extends UntypedAbstractActor {
     }
 
     private void majorityReceived(){
-        log.info("majority received " + self().path().name() + " with ballot " + ballot);
+        log.info("majority received with ballot " + ballot);
         int maxEstBallot = 0;
         ActorRef maxStateProcess = self();
         for (ActorRef p : states.keySet()){
@@ -171,7 +171,7 @@ public class Process extends UntypedAbstractActor {
             log.info("p" + self().path().name() + " received message: " + m);
 
             if(m.equals("launch")) {
-                int randomValue = new Random().nextInt(1);
+                int randomValue = new Random().nextInt(2);
                 log.info("p" + self().path().name() + " proposes : " + randomValue);
                 propose(randomValue);
             }
