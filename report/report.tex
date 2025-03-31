@@ -162,10 +162,8 @@ Since we need a quorum, $f$ must be less than $N/2$. Thus,
 we have nine different scenarios to test the performance of the simulation
 with $(N,f) \in \{(3,1),(10,4),(100,49)\}$ and $M \in \{3,10,100\}$.
 
-
-\subsection{Results for a fix number of operations}
-Let's first analyze the results for a fix number of operations and different values of $N$ and $f$.
-
+\subsection{Results for a fixed timeout $t_{le}$}
+Let's now analyze the results for a fixed timeout $t_{le}$ and different values of $N$.
 
 \begin{figure}[h!]
     \centering
@@ -181,6 +179,13 @@ Let's first analyze the results for a fix number of operations and different val
             grid style=dashed
         ]
         \addplot coordinates {(3, 409.09) (10, 468.75) (100, 737.10)};
+        \addlegendentry{$t_{le} = 0.5$}
+        \addplot coordinates {(3, 333.33) (10, 416.67) (100, 666.67)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(3, 285.71) (10, 357.14) (100, 571.43)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(3, 250) (10, 333.33) (100, 500)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Throughput comparison }
@@ -197,16 +202,20 @@ Let's first analyze the results for a fix number of operations and different val
             grid style=dashed
         ]
         \addplot coordinates {(3, 1) (10, 4) (100, 35)};
-        \addlegendentry{Write}
+        \addlegendentry{$t_{le} = 0.5$}
 
         \addplot coordinates {(3, 1) (10, 5) (100, 26)};
-        \addlegendentry{Read}
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(3, 1) (10, 6) (100, 16)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(3, 1) (10, 7) (100, 13)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Operation execution time comparison}
 \end{subfigure}
 
-\caption{Performance analysis for \( M = 3 \)}
+\caption{Performance analysis for a fix timeout}
 \end{figure}
 
 \begin{figure}[ht!]
@@ -222,9 +231,16 @@ Let's first analyze the results for a fix number of operations and different val
             grid style=dashed,
         ]
         \addplot coordinates {(3, 0.022) (10, 0.064) (100, 0.407)};
+        \addlegendentry{$t_{le} = 0.5$}
+        \addplot coordinates {(3, 0.022) (10, 0.064) (100, 0.229)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(3, 0.022) (10, 0.064) (100, 0.1)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(3, 0.022) (10, 0.064) (100, 0.064)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
-    \caption{Latency comparison for \( M = 3 \)}
+    \caption{Latency comparison for a fix timeout}
 \end{figure}
 
 
@@ -253,10 +269,92 @@ there are per process, the better the performance of the system with
 \newpage
 
 \subsection{Results for a fix number of processes}
-As we did in the previous section, we will analyze the results for
-a fixed number of processes and different values of $M$. This will allow us
-to identify which configuration is most efficient in each scenario.
+Let's first analyze the results for a fix number of processes $N$ and different values of $t_{le}$.
 
+\begin{figure}[h!]
+    \centering
+    \begin{subfigure}{0.55\textwidth}
+    \begin{tikzpicture}
+        \begin{axis}[
+            xlabel={Timeout (s)},
+            ylabel={Throughput (op/s)},
+            xtick=data,
+            symbolic x coords={0.5, 1, 1.5, 2},
+            ymin=0, ymax=2000,
+            ymajorgrids=true,
+            grid style=dashed
+        ]
+        \addplot coordinates {(0.5, 1000) (1, 1150) (1.5, 1500) (2, 2000)};
+        \addlegendentry{N = 3}
+        \addplot coordinates {(0.5, 1000) (1, 1150) (1.5, 1500) (2, 2000)};
+        \addlegendentry{N = 10}
+        \addplot coordinates {(0.5, 1000) (1, 1150) (1.5, 1500) (2, 2000)};
+        \addlegendentry{N = 100}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Throughput comparison }
+\end{subfigure}%
+\begin{subfigure}{.55\textwidth}
+    \begin{tikzpicture}
+        \begin{axis}[
+            xlabel={Timeout (s)},
+            ylabel={Time per operation (ms)},
+            xtick=data,
+            symbolic x coords={0.5, 1, 1.5, 2},
+            ymin=0, ymax=40,
+            ymajorgrids=true,
+            grid style=dashed
+        ]
+        \addplot coordinates {(0.5, 1) (1, 2) (1.5, 3) (2, 4)};
+        \addlegendentry{N = 3}
+
+        \addplot coordinates {(0.5, 1) (1, 2) (1.5, 3) (2, 4)};
+        \addlegendentry{N = 10}
+
+        \addplot coordinates {(0.5, 1) (1, 2) (1.5, 3) (2, 4)};
+        \addlegendentry{N = 100}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Operation execution time comparison}
+\end{subfigure}
+\caption{Performance analysis for a fix number of processes}
+\end{figure}
+
+\begin{figure}[ht!]
+    \centering
+    \begin{tikzpicture}[scale=0.9]
+        \begin{axis}[
+            xlabel={Timeout (s)},
+            ylabel={Latency (s)},
+            xtick=data,
+            symbolic x coords={0.5, 1, 1.5, 2},
+            ymin=0, ymax=2,
+            ymajorgrids=true,
+            grid style=dashed,
+        ]
+        \addplot coordinates {(0.5, 0.022) (1, 0.064) (1.5, 0.1) (2, 0.2)};
+        \addlegendentry{N = 3}
+
+        \addplot coordinates {(0.5, 0.022) (1, 0.064) (1.5, 0.1) (2, 0.2)};
+        \addlegendentry{N = 10}
+
+        \addplot coordinates {(0.5, 0.022) (1, 0.064) (1.5, 0.1) (2, 0.2)};
+        \addlegendentry{N = 100}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Latency comparison for a fix number of processes}
+\end{figure}
+
+We can observe that throughput increases with the number of operations
+per process, while the time taken to complete an operation remains almost constant.
+
+Although we cannot compute many operations in parallel, the throughput
+remains high because the quorum is reached almost instantaneously.
+
+\newpage
+
+\subsection{Results for the probability of failure}
+Let's now analyze the results for fix numbers of processes $N$ and timeout $t_{le}$, with different probabilities of failure $\alpha$.
 
 \subsubsection{Results for \(N = 3\) and \(f = 1\)}
 
@@ -265,15 +363,22 @@ to identify which configuration is most efficient in each scenario.
     \begin{subfigure}{0.55\textwidth}
     \begin{tikzpicture}
         \begin{axis}[
-            xlabel={Number of operation per processes},
+            xlabel={Probability of failures},
             ylabel={Throughput (op/s)},
             xtick=data,
-            symbolic x coords={3, 10, 100},
+            symbolic x coords={0, 0.1, 1},
             ymin=0, ymax=2000,
             ymajorgrids=true,
             grid style=dashed
         ]
-        \addplot coordinates {(3, 409.09) (10, 491.80) (100, 983.60)};
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 0.5$}
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Throughput comparison }
@@ -281,19 +386,23 @@ to identify which configuration is most efficient in each scenario.
 \begin{subfigure}{.55\textwidth}
     \begin{tikzpicture}
         \begin{axis}[
-            xlabel={Number of processes},
+            xlabel={Probability of failures},
             ylabel={Time per operation (ms)},
             xtick=data,
-            symbolic x coords={3, 10, 100},
+            symbolic x coords={0, 0.1, 1},
             ymin=0, ymax=40,
             ymajorgrids=true,
             grid style=dashed
         ]
-        \addplot coordinates {(3, 1) (10, 2) (100, 0.06)};
-        \addlegendentry{Write}
+        \addplot coordinates {(0, 4) (0.1, 5) (1, 6)};
+        \addlegendentry{$t_{le} = 0.5$}
 
-        \addplot coordinates {(3, 1) (10, 0.8) (100, 0.07)};
-        \addlegendentry{Read}
+        \addplot coordinates {(0, 5) (0.1, 6) (1, 7)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(0, 6) (0.1, 7) (1, 8)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(0, 7) (0.1, 8) (1, 9)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Operation execution time comparison}
@@ -305,25 +414,26 @@ to identify which configuration is most efficient in each scenario.
     \centering
     \begin{tikzpicture}[scale=0.9]
         \begin{axis}[
-            xlabel={Number of processes},
+            xlabel={Probability of failures},
             ylabel={Latency (s)},
             xtick=data,
-            symbolic x coords={3, 10, 100},
+            symbolic x coords={0, 0.1, 1},
             ymin=0, ymax=2,
             ymajorgrids=true,
             grid style=dashed,
         ]
-        \addplot coordinates {(3, 0.022) (10, 0.061) (100, 0.305)};
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 0.5$}
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Latency comparison for \( N = 3 \)}
 \end{figure}
-
-We can observe that throughput increases with the number of operations
-per process, while the time taken to complete an operation remains almost constant.
-
-Although we cannot compute many operations in parallel, the throughput
-remains high because the quorum is reached almost instantaneously.
 
 \newpage
 
@@ -334,15 +444,22 @@ remains high because the quorum is reached almost instantaneously.
     \begin{subfigure}{0.55\textwidth}
     \begin{tikzpicture}
         \begin{axis}[
-            xlabel={Number of operation per processes},
+            xlabel={Probability of failures},
             ylabel={Throughput (op/s)},
             xtick=data,
-            symbolic x coords={3, 10, 100},
+            symbolic x coords={0, 0.1, 1},
             ymin=0, ymax=2000,
             ymajorgrids=true,
             grid style=dashed
         ]
-        \addplot coordinates {(3, 468.75) (10, 436.68) (100, 1488.09)};
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 0.5$}
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Throughput comparison }
@@ -350,19 +467,23 @@ remains high because the quorum is reached almost instantaneously.
 \begin{subfigure}{.55\textwidth}
     \begin{tikzpicture}
         \begin{axis}[
-            xlabel={Number of processes},
+            xlabel={Probability of failures},
             ylabel={Time per operation (ms)},
             xtick=data,
-            symbolic x coords={3, 10, 100},
+            symbolic x coords={0, 0.1, 1},
             ymin=0, ymax=40,
             ymajorgrids=true,
             grid style=dashed
         ]
-        \addplot coordinates {(3, 4) (10, 25) (100, 2)};
-        \addlegendentry{Write}
+        \addplot coordinates {(0, 4) (0.1, 5) (1, 6)};
+        \addlegendentry{$t_{le} = 0.5$}
 
-        \addplot coordinates {(3, 5) (10, 6) (100, 0.09)};
-        \addlegendentry{Read}
+        \addplot coordinates {(0, 5) (0.1, 6) (1, 7)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(0, 6) (0.1, 7) (1, 8)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(0, 7) (0.1, 8) (1, 9)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Operation execution time comparison}
@@ -374,52 +495,52 @@ remains high because the quorum is reached almost instantaneously.
     \centering
     \begin{tikzpicture}[scale=0.9]
         \begin{axis}[
-            xlabel={Number of processes},
+            xlabel={Probability of failures},
             ylabel={Latency (s)},
             xtick=data,
-            symbolic x coords={3, 10, 100},
+            symbolic x coords={0, 0.1, 1},
             ymin=0, ymax=2,
             ymajorgrids=true,
             grid style=dashed,
         ]
-        \addplot coordinates {(3, 0.064) (10, 0.229) (100, 0.672)};
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 0.5$}
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Latency comparison for \( N = 10 \)}
 \end{figure}
 
-First, we observe that with a low number of operations,
-this configuration is less efficient than the previous
-one—about 12\% less efficient. It experiences higher latency,
-and throughput is lower. However, for higher values of $M$, this
-configuration becomes more efficient because it can process several
-operations concurrently.
-
-If we consider each operation as a request from a user,
-and latency is a critical factor, this configuration is better suited.
- Fewer users will have to wait for processes to handle their requests.
-
-The operation execution time may seem unusual, but except for the
-case with 10 processes, the time taken to complete an operation
-remains almost constant. This indicates that the processes are
-waiting for each other more in this configuration compared to the
-previous one.
 \newpage
+
 \subsubsection{Results for \(N = 100\) and \(f = 49\)}
+
 \begin{figure}[h!]
     \centering
     \begin{subfigure}{0.55\textwidth}
     \begin{tikzpicture}
         \begin{axis}[
-            xlabel={Number of operation per processes},
+            xlabel={Probability of failures},
             ylabel={Throughput (op/s)},
             xtick=data,
-            symbolic x coords={3, 10, 100},
+            symbolic x coords={0, 0.1, 1},
             ymin=0, ymax=2000,
             ymajorgrids=true,
             grid style=dashed
         ]
-        \addplot coordinates {(3, 737.1) (10, 1067.23) (100, 1649.8)};
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 0.5$}
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Throughput comparison }
@@ -427,19 +548,23 @@ previous one.
 \begin{subfigure}{.55\textwidth}
     \begin{tikzpicture}
         \begin{axis}[
-            xlabel={Number of processes},
+            xlabel={Probability of failures},
             ylabel={Time per operation (ms)},
             xtick=data,
-            symbolic x coords={3, 10, 100},
+            symbolic x coords={0, 0.1, 1},
             ymin=0, ymax=40,
             ymajorgrids=true,
             grid style=dashed
         ]
-        \addplot coordinates {(3, 35) (10, 29) (100, 16)};
-        \addlegendentry{Write}
+        \addplot coordinates {(0, 4) (0.1, 5) (1, 6)};
+        \addlegendentry{$t_{le} = 0.5$}
 
-        \addplot coordinates {(3, 26) (10, 13) (100, 13)};
-        \addlegendentry{Read}
+        \addplot coordinates {(0, 5) (0.1, 6) (1, 7)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(0, 6) (0.1, 7) (1, 8)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(0, 7) (0.1, 8) (1, 9)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Operation execution time comparison}
@@ -451,31 +576,26 @@ previous one.
     \centering
     \begin{tikzpicture}[scale=0.9]
         \begin{axis}[
-            xlabel={Number of processes},
+            xlabel={Probability of failures},
             ylabel={Latency (s)},
             xtick=data,
-            symbolic x coords={3, 10, 100},
-            ymin=0, ymax=7,
+            symbolic x coords={0, 0.1, 1},
+            ymin=0, ymax=2,
             ymajorgrids=true,
             grid style=dashed,
         ]
-        \addplot coordinates {(3, 0.407) (10, 0.937) (100, 6.061)};
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 0.5$}
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 1$}
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 1.5$}
+        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
+        \addlegendentry{$t_{le} = 2$}
         \end{axis}
     \end{tikzpicture}
     \caption{Latency comparison for \( N = 100 \)}
 \end{figure}
-
-Once again, the throughput follows a logarithmic trend with the number of operations
-per process. This configuration is less efficient than the previous ones for smaller
-values of $M$.
-
-For instance, with 300 operations, the configuration with 3 processes is 26\% more
-efficient than this one. Similarly, for 1000 operations, the configuration with 10
-processes is 13\% more efficient. However, as the number of operations increases,
-this configuration becomes more efficient because it can process several operations
-simultaneously.
-
-\newpage
 
 \section{Conclusion}
 In conclusion, we can say that the configuration with 3 processes is more
