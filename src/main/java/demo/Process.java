@@ -27,6 +27,10 @@ public class Process extends UntypedAbstractActor {
     private HashMap<ActorRef, Pair> states = new HashMap<>(); 
     private HashMap<Integer, Integer> ackMajorityMap = new HashMap<>();
     private boolean silentMode = false;
+    private boolean faultprone = false;
+    private double alpha = 0;
+    private boolean proposemode = true;
+    private int randomValue;
 
     public Process(int ID, int nb) {
         N = nb;
@@ -49,78 +53,111 @@ public class Process extends UntypedAbstractActor {
         });
     }
     
+    private void mayCrash(){
+        if (this.faultprone && !this.silentMode){
+            Random r = new Random();
+            if(r.nextDouble() < alpha){
+                log.info("p" + self().path().name() + " crashed");
+                this.silentMode = true;
+            }
+        }
+    }
+
     private void abortReceived(int newBallot, ActorRef pj){
-        log.info("abort received from " + pj.path().name() + " with ballot " + newBallot);
-        return;
+        this.mayCrash();
+        if(!this.silentMode){
+            log.info("abort received from " + pj.path().name() + " with ballot " + newBallot);
+            this.proposemode = false;
+            return;
+        }
     }
     
     private void readReceived(int newBallot, ActorRef pj) {
+        this.mayCrash();
+        if (!this.silentMode){
             log.info("read received from " + pj.path().name() + " with ballot " + newBallot);
-            if (readballot > newBallot || imposeballot > newBallot) {
-                readballot = newBallot;
+            if (this.readballot > newBallot || this.imposeballot > newBallot) {
+                this.readballot = newBallot;
+                this.mayCrash();
                 pj.tell(new AbortMsg(newBallot), self());
             } else {
-                readballot = newBallot;
-                pj.tell(new GatherMsg(newBallot, imposeballot, estimate), self());
+                this.readballot = newBallot;
+                this.mayCrash();
+                pj.tell(new GatherMsg(newBallot, this.imposeballot, this.estimate), self());
             }
+        }
     }
 
     private void gatherReceived(int newBallot, int estballot, int est, ActorRef pj){
-        log.info("gather received from " + getSender().path().name() + " with ballot " + newBallot);
-        states.put(pj, new Pair(est, estballot));
-        if (states.size()>=N/2){
-            getContext().system().scheduler().scheduleOnce(Duration.ofMillis(1000), getSelf(), "majority", getContext().system().dispatcher(), ActorRef.noSender());
+        this.mayCrash();
+        if (!this.silentMode){
+            log.info("gather received from " + getSender().path().name() + " with ballot " + newBallot);
+            this.states.put(pj, new Pair(est, estballot));
+            if (this.states.size()> N/2){
+                getContext().system().scheduler().scheduleOnce(Duration.ofMillis(0), getSelf(), "majority", getContext().system().dispatcher(), ActorRef.noSender());
+            }      
         }
+        
     }
 
-    private void ackReceived(int ballot, ActorRef pj){
-        log.info("ack received from " + pj.path().name() + " with ballot " + ballot);
-        if (ackMajorityMap.containsKey(ballot)){
-            ackMajorityMap.put(ballot, ackMajorityMap.get(ballot)+1);
-        } else {
-            ackMajorityMap.put(ballot, 1);
-        }
-        if (ackMajorityMap.get(ballot) >= N/2){
-            getContext().system().scheduler().scheduleOnce(Duration.ofMillis(1000), getSelf(), "ackmajority", getContext().system().dispatcher(), ActorRef.noSender());
+    private void ackReceived(int newBallot, ActorRef pj){
+        this.mayCrash();
+        if(!this.silentMode){
+            log.info("ack received from " + pj.path().name() + " with ballot " + newBallot);
+            if (this.ackMajorityMap.containsKey(newBallot)){
+                this.ackMajorityMap.put(newBallot, this.ackMajorityMap.get(newBallot)+1);
+            } else {
+                this.ackMajorityMap.put(newBallot, 1);
+            }
+            if (this.ackMajorityMap.get(newBallot) > N/2){
+                getContext().system().scheduler().scheduleOnce(Duration.ofMillis(1000), getSelf(), "ackmajority", getContext().system().dispatcher(), ActorRef.noSender());
+            }
         }
     }
 
     private void majorityReceived(){
-        log.info("majority received with ballot " + ballot);
-        int maxEstBallot = 0;
-        ActorRef maxStateProcess = self();
-        for (ActorRef p : states.keySet()){
-            Pair pair = states.get(p);
-            if (pair.estballot > maxEstBallot){
-                maxStateProcess = p;
-                maxEstBallot = pair.estballot;
+        if(!silentMode){
+            log.info("majority received with ballot " + this.ballot);
+            int maxEstBallot = 0;
+            ActorRef maxStateProcess = self();
+            for (ActorRef p : this.states.keySet()){
+                Pair pair = this.states.get(p);
+                if (pair.estballot > maxEstBallot){
+                    maxStateProcess = p;
+                    maxEstBallot = pair.estballot;
+                }
             }
-        }
-        log.info("max ballot " + maxEstBallot + " from process " + maxStateProcess.path().name());
-        if(maxEstBallot>0){
-            proposal = states.get(maxStateProcess).est;
-            
-        }
-        states.clear();
-        for (ActorRef m : processes.references){
-            m.tell(new ImposeMsg(ballot, proposal), self());
+            log.info("max ballot " + maxEstBallot + " from process " + maxStateProcess.path().name());
+            if(maxEstBallot>0){
+                this.proposal = this.states.get(maxStateProcess).est;
+                
+            }
+            this.states.clear();
+            for (ActorRef m : this.processes.references){
+                this.mayCrash();
+                m.tell(new ImposeMsg(this.ballot, this.proposal), self());
+            }
         }
 
     }
     
     private void propose(int v){
-        proposal = v;
-        ballot += N;
-        for (ActorRef m : processes.references){
-            m.tell(new ReadMsg(ballot), self());
-        }        
+        if(!this.silentMode){
+            this.proposal = v;
+            this.ballot += N;
+            for (ActorRef m : this.processes.references){
+                this.mayCrash();
+                m.tell(new ReadMsg(this.ballot), self());
+            }
+        }
+        getContext().system().scheduler().scheduleOnce(Duration.ofMillis(new Random().nextInt(10, 50)), getSelf(), "propose", getContext().system().dispatcher(), ActorRef.noSender());
     }
 
 
     public void onReceive(Object message) throws Throwable {
         if (message instanceof Members) { //save the system's info
             Members m = (Members) message;
-            processes = m;
+            this.processes = m;
             log.info("p" + self().path().name() + " received processes info");
         }
 
@@ -145,18 +182,22 @@ public class Process extends UntypedAbstractActor {
         }
 
         else if(message instanceof ImposeMsg){
-            ImposeMsg m = (ImposeMsg) message;
-            log.info("impose received " + self().path().name() + " from " + getSender().path().name() + " with ballot " + m.ballot + " and proposal " + m.proposal);
-            if (imposeballot>m.ballot || readballot>m.ballot){
-                getSender().tell(new AbortMsg(m.ballot), self());      
-                
-            } else {
-                imposeballot = m.ballot;
-                estimate = m.proposal;
-                for (ActorRef p : processes.references){
-                    p.tell(new AckMsg(imposeballot), self());
+            this.mayCrash();
+            if(!this.silentMode){
+                ImposeMsg m = (ImposeMsg) message;
+                log.info("impose received " + self().path().name() + " from " + getSender().path().name() + " with ballot " + m.ballot + " and proposal " + m.proposal);
+                if (this.imposeballot>m.ballot || this.readballot>m.ballot){
+                    this.mayCrash();
+                    getSender().tell(new AbortMsg(m.ballot), self());      
+                    
+                } else {
+                    this.imposeballot = m.ballot;
+                    this.estimate = m.proposal;
+                    for (ActorRef p : this.processes.references){
+                        this.mayCrash();
+                        p.tell(new AckMsg(this.imposeballot), self());
+                    }
                 }
-
             }
         }
 
@@ -165,13 +206,20 @@ public class Process extends UntypedAbstractActor {
             this.decideReceived(m.proposal);
         }
 
+        else if(message instanceof CrashMsg){
+            CrashMsg m = (CrashMsg) message;
+            this.alpha = m.alpha;
+            log.info("p" + self().path().name() + " entered fault-prone mode");
+            this.faultprone = true;
+        }
 
         else if (message instanceof String){
             String m = (String) message;
-            log.info("p" + self().path().name() + " received message: " + m);
+            
+            
 
             if(m.equals("launch")) {
-                int randomValue = new Random().nextInt(2);
+                randomValue = new Random().nextInt(2);
                 log.info("p" + self().path().name() + " proposes : " + randomValue);
                 propose(randomValue);
             }
@@ -183,34 +231,51 @@ public class Process extends UntypedAbstractActor {
             if (m.equals("ackmajority")){
                 this.ackMajorityReceived();
             }   
-          
+
+            if(m.equals("hold")){
+                this.proposemode = false;
+            }
+
+            if(m.equals("propose")){
+                if(this.proposemode){
+                    log.info("p" + self().path().name() + " proposes : " + this.randomValue);
+                    propose(this.randomValue);
+                    
+                }
+            }
         }
 
          
     }
 
     private void decideReceived(int newProposal) {
+        this.mayCrash();
         if(!silentMode){
-            log.info("decide received " + self().path().name() + " with proposal " + newProposal);
+            log.info("decide received with proposal "+ newProposal);
         
-            for (ActorRef m : processes.references){
+            for (ActorRef m : this.processes.references){
                 if(m != self()){
+                    this.mayCrash();
                     m.tell(new DecideMsg(newProposal), self());
                 }
             }
+            silentMode = true;
+            this.proposemode = false;
             log.info("DECIDED " + newProposal);
+            
         }
         
-        silentMode = true;
+        
     }
 
     private void ackMajorityReceived() {
-    if(!silentMode){
-        log.info("ackmajority received " + self().path().name() + " with ballot " + ballot);
+    if(!this.silentMode){
+        log.info("ackmajority received with ballot " + this.ballot);
 
         
-        for (ActorRef m : processes.references){
-            m.tell(new DecideMsg(proposal), self());
+        for (ActorRef m : this.processes.references){
+            this.mayCrash();
+            m.tell(new DecideMsg(this.proposal), self());
         }
     }
     }
