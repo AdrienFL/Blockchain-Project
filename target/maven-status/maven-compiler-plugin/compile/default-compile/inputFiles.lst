@@ -1,10 +1,10 @@
-C:\Users\adrie\Documents\Adrien\Code\SLR\Blockchain Project\src\main\java\demo\Process.java
-C:\Users\adrie\Documents\Adrien\Code\SLR\Blockchain Project\src\main\java\demo\Pair.java
-C:\Users\adrie\Documents\Adrien\Code\SLR\Blockchain Project\src\main\java\demo\ReadMsg.java
-C:\Users\adrie\Documents\Adrien\Code\SLR\Blockchain Project\src\main\java\demo\GatherMsg.java
-C:\Users\adrie\Documents\Adrien\Code\SLR\Blockchain Project\src\main\java\demo\Main.java
-C:\Users\adrie\Documents\Adrien\Code\SLR\Blockchain Project\src\main\java\demo\DecideMsg.java
-C:\Users\adrie\Documents\Adrien\Code\SLR\Blockchain Project\src\main\java\demo\Members.java
-C:\Users\adrie\Documents\Adrien\Code\SLR\Blockchain Project\src\main\java\demo\AbortMsg.java
-C:\Users\adrie\Documents\Adrien\Code\SLR\Blockchain Project\src\main\java\demo\ImposeMsg.java
-C:\Users\adrie\Documents\Adrien\Code\SLR\Blockchain Project\src\main\java\demo\AckMsg.java
+/home/kevin/Projets/slr/Blockchain-Project/src/main/java/demo/ImposeMsg.java
+/home/kevin/Projets/slr/Blockchain-Project/src/main/java/demo/Pair.java
+/home/kevin/Projets/slr/Blockchain-Project/src/main/java/demo/Main.java
+/home/kevin/Projets/slr/Blockchain-Project/src/main/java/demo/AckMsg.java
+/home/kevin/Projets/slr/Blockchain-Project/src/main/java/demo/Members.java
+/home/kevin/Projets/slr/Blockchain-Project/src/main/java/demo/AbortMsg.java
+/home/kevin/Projets/slr/Blockchain-Project/src/main/java/demo/Process.java
+/home/kevin/Projets/slr/Blockchain-Project/src/main/java/demo/GatherMsg.java
+/home/kevin/Projets/slr/Blockchain-Project/src/main/java/demo/ReadMsg.java
+/home/kevin/Projets/slr/Blockchain-Project/src/main/java/demo/DecideMsg.java

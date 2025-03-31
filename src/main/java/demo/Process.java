@@ -1,18 +1,14 @@
 package demo;
 
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Random;
+
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedAbstractActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Process extends UntypedAbstractActor {
     private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);// Logger attached to actor
@@ -24,7 +20,7 @@ public class Process extends UntypedAbstractActor {
     private int readballot;
     private int imposeballot;
     private int estimate;
-    private HashMap<ActorRef, Pair> states = new HashMap<>(); 
+    private HashMap<ActorRef, Pair> states = new HashMap<>();
     private HashMap<Integer, Integer> ackMajorityMap = new HashMap<>();
     private boolean silentMode = false;
 
@@ -35,7 +31,7 @@ public class Process extends UntypedAbstractActor {
         imposeballot = id - N;
         ballot = id-N;
     }
-    
+
     public String toString() {
         return "Process{" + "id=" + id ;
     }
@@ -48,12 +44,12 @@ public class Process extends UntypedAbstractActor {
             return new Process(ID, nb);
         });
     }
-    
+
     private void abortReceived(int newBallot, ActorRef pj){
         log.info("abort received " + self().path().name() + " from " + pj.path().name() + " with ballot " + newBallot);
         return;
     }
-    
+
     private void readReceived(int newBallot, ActorRef pj) {
             log.info("read received " + self().path().name() + " from " + pj.path().name() + " with ballot " + newBallot);
             if (readballot > newBallot || imposeballot > newBallot) {
@@ -99,7 +95,7 @@ public class Process extends UntypedAbstractActor {
         log.info("max ballot " + maxEstBallot + " from process " + maxStateProcess.path().name());
         if(maxEstBallot>0){
             proposal = states.get(maxStateProcess).est;
-            
+
         }
         states.clear();
         for (ActorRef m : processes.references){
@@ -107,13 +103,13 @@ public class Process extends UntypedAbstractActor {
         }
 
     }
-    
+
     private void propose(int v){
         proposal = v;
         ballot += N;
         for (ActorRef m : processes.references){
             m.tell(new ReadMsg(ballot), self());
-        }        
+        }
     }
 
 
@@ -148,8 +144,8 @@ public class Process extends UntypedAbstractActor {
             ImposeMsg m = (ImposeMsg) message;
             log.info("impose received " + self().path().name() + " from " + getSender().path().name() + " with ballot " + m.ballot + " and proposal " + m.proposal);
             if (imposeballot>m.ballot || readballot>m.ballot){
-                getSender().tell(new AbortMsg(m.ballot), self());      
-                
+                getSender().tell(new AbortMsg(m.ballot), self());
+
             } else {
                 imposeballot = m.ballot;
                 estimate = m.proposal;
@@ -181,17 +177,17 @@ public class Process extends UntypedAbstractActor {
 
             if (m.equals("ackmajority")){
                 this.ackMajorityReceived();
-            }   
-          
+            }
+
         }
 
-         
+
     }
 
     private void decideReceived(int newProposal) {
         if(!silentMode){
             log.info("decide received " + self().path().name() + " with proposal " + newProposal);
-        
+
             for (ActorRef m : processes.references){
                 if(m != self()){
                     m.tell(new DecideMsg(newProposal), self());
@@ -199,7 +195,7 @@ public class Process extends UntypedAbstractActor {
             }
             log.info("decided " + newProposal);
         }
-        
+
         silentMode = true;
     }
 
@@ -207,10 +203,11 @@ public class Process extends UntypedAbstractActor {
     if(!silentMode){
         log.info("ackmajority received " + self().path().name() + " with ballot " + ballot);
 
-        
+
         for (ActorRef m : processes.references){
             m.tell(new DecideMsg(proposal), self());
         }
     }
+    Main.notifyDecision();
     }
 }
