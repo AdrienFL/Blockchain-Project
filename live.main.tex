@@ -1,19 +1,4 @@
-\documentclass{article}
-\usepackage{etex}
-\usepackage{amsmath}
-\usepackage{pdfpages}
-\usepackage{tikz}
-\usepackage{subcaption}
-\usepackage{pgf-umlsd}
-\usepackage{pgfplots}
-\usepackage{geometry}
-\geometry{
-	a4paper,
-	left=25.4mm,
-	right=25.4mm,
-	top=25mm,
-	bottom=25.4mm
-	}
+undefined
 \begin{document}
 
 \includepdf{title.pdf}
@@ -47,8 +32,7 @@ For our implementation with Java and the Akka framework, we have created the fol
     \item \texttt{ReadResponse}: The class that represents the read responses sent between the processes.
 
     \item \texttt{WriteAck}: The class that represents the write acknowledgments sent between the processes.
-
-    \item \texttt{Pair}: Used to store (est and estballot) the values inside the states map.
+    
 \end{itemize}
 
 We didn't want to use multiple threads in the \texttt{Process} class due to the large number of processes
@@ -613,3 +597,4 @@ processes could be a good compromise between the other two in many situations,
 as it is sufficiently efficient for handling both small and large numbers of requests.
 \end{document}
 
+undefined
