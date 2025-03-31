@@ -1,9 +1,0 @@
-\contentsline {figure}{\numberline {1}{\ignorespaces Sequence diagram of the Akka design\relax }}{4}{}%
-\contentsline {figure}{\numberline {2}{\ignorespaces Performance analysis for \( M = 3 \)\relax }}{7}{}%
-\contentsline {figure}{\numberline {3}{\ignorespaces Latency comparison for \( M = 3 \)\relax }}{7}{}%
-\contentsline {figure}{\numberline {4}{\ignorespaces Performance analysis for \( N = 3 \)\relax }}{9}{}%
-\contentsline {figure}{\numberline {5}{\ignorespaces Latency comparison for \( N = 3 \)\relax }}{9}{}%
-\contentsline {figure}{\numberline {6}{\ignorespaces Performance analysis for \( N = 10 \)\relax }}{10}{}%
-\contentsline {figure}{\numberline {7}{\ignorespaces Latency comparison for \( N = 10 \)\relax }}{10}{}%
-\contentsline {figure}{\numberline {8}{\ignorespaces Performance analysis for \( N = 100 \)\relax }}{11}{}%
-\contentsline {figure}{\numberline {9}{\ignorespaces Latency comparison for \( N = 100 \)\relax }}{11}{}%
