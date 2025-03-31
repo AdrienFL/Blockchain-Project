@@ -1,0 +1,18 @@
+# TeX-related files
+*.aux
+*.log
+*.toc
+*.out
+*.bbl
+*.blg
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# Maven build files
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.iml
