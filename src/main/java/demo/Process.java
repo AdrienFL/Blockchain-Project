@@ -172,6 +172,7 @@ public class Process extends UntypedAbstractActor {
 
             if(m.equals("launch")) {
                 int randomValue = new Random().nextInt(1);
+                log.info("p" + self().path().name() + " proposes : " + randomValue);
                 propose(randomValue);
             }
 
@@ -197,7 +198,7 @@ public class Process extends UntypedAbstractActor {
                     m.tell(new DecideMsg(newProposal), self());
                 }
             }
-            log.info("decided " + newProposal);
+            log.info("DECIDED " + newProposal);
         }
         
         silentMode = true;
