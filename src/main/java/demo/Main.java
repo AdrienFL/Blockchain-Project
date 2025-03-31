@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 
 public class Main {
 
-    public static int N = 4;
+    public static int N = 6;
 
 
     public static void main(String[] args) throws InterruptedException {

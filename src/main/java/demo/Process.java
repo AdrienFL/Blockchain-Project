@@ -150,7 +150,7 @@ public class Process extends UntypedAbstractActor {
                 m.tell(new ReadMsg(this.ballot), self());
             }
         }
-        getContext().system().scheduler().scheduleOnce(Duration.ofMillis(new Random().nextInt(10, 50)), getSelf(), "propose", getContext().system().dispatcher(), ActorRef.noSender());
+        getContext().system().scheduler().scheduleOnce(Duration.ofMillis(new Random().nextInt(0, 10)), getSelf(), "propose", getContext().system().dispatcher(), ActorRef.noSender());
     }
 
 
