@@ -7,6 +7,7 @@ import java.util.Random;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.actor.TypedActor;
 import akka.actor.UntypedAbstractActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
@@ -30,12 +31,15 @@ public class Process extends UntypedAbstractActor {
     private int randomValue;
     private ArrayList<Integer> abortList = new ArrayList<Integer>();
 
+    private Random random = new Random();
+
     public Process(int ID, int nb) {
         N = nb;
         id = ID;
         readballot = 0;
         imposeballot = id - N;
         ballot = id-N;
+        Main.processes.add(this);
     }
 
     public String toString() {
@@ -55,7 +59,7 @@ public class Process extends UntypedAbstractActor {
         if (this.faultprone && !this.silentMode){
             Random r = new Random();
             if(r.nextDouble() < alpha){
-                log.info("p" + self().path().name() + " crashed");
+                // log.info("p" + self().path().name() + " crashed");
                 this.silentMode = true;
             }
         }
@@ -64,9 +68,9 @@ public class Process extends UntypedAbstractActor {
     private void abortReceived(int newBallot, ActorRef pj){
         this.mayCrash();
         if(!this.silentMode){
-            //log.info("abort received from " + pj.path().name() + " with ballot " + newBallot);
+            // log.info("abort received from " + pj.path().name() + " with ballot " + newBallot);
             this.abortList.add(newBallot);
-            this.proposemode = false;
+            // this.proposemode = false;
             return;
         }
     }
@@ -74,7 +78,7 @@ public class Process extends UntypedAbstractActor {
     private void readReceived(int newBallot, ActorRef pj) {
         this.mayCrash();
         if (!this.silentMode){
-            //log.info("read received from " + pj.path().name() + " with ballot " + newBallot);
+            // log.info("read received from " + pj.path().name() + " with ballot " + newBallot);
             if (this.readballot > newBallot || this.imposeballot > newBallot) {
                 this.mayCrash();
                 pj.tell(new AbortMsg(newBallot), self());
@@ -89,7 +93,7 @@ public class Process extends UntypedAbstractActor {
     private void gatherReceived(int newBallot, int estballot, int est, ActorRef pj){
         this.mayCrash();
         if (!this.silentMode){
-            //log.info("gather received from " + getSender().path().name() + " with ballot " + newBallot);
+            // log.info("gather received from " + getSender().path().name() + " with ballot " + newBallot);
             if(!this.abortList.contains(newBallot)){
                 this.states.put(pj, new Pair(est, estballot));
                 if (this.states.size()> N/2){
@@ -104,7 +108,7 @@ public class Process extends UntypedAbstractActor {
     private void ackReceived(int newBallot, ActorRef pj){
         this.mayCrash();
         if(!this.silentMode){
-            //log.info("ack received from " + pj.path().name() + " with ballot " + newBallot);
+            // log.info("ack received from " + pj.path().name() + " with ballot " + newBallot);
             if (!this.abortList.contains(newBallot)){
                 if (this.ackMajorityMap.containsKey(newBallot)){
                     this.ackMajorityMap.put(newBallot, this.ackMajorityMap.get(newBallot)+1);
@@ -122,7 +126,7 @@ public class Process extends UntypedAbstractActor {
 
     private void majorityReceived(){
         if(!silentMode){
-            //log.info("majority received with ballot " + this.ballot);
+            // log.info("majority received with ballot " + this.ballot);
             int maxEstBallot = 0;
             ActorRef maxStateProcess = self();
             for (ActorRef p : this.states.keySet()){
@@ -132,7 +136,7 @@ public class Process extends UntypedAbstractActor {
                     maxEstBallot = pair.estballot;
                 }
             }
-            //log.info("max ballot " + maxEstBallot + " from process " + maxStateProcess.path().name());
+            // log.info("max ballot " + maxEstBallot + " from process " + maxStateProcess.path().name());
             if(maxEstBallot>0){
                 this.proposal = this.states.get(maxStateProcess).est;
             }
@@ -154,7 +158,7 @@ public class Process extends UntypedAbstractActor {
                 this.mayCrash();
                 m.tell(new ReadMsg(this.ballot), self());
             }
-            getContext().system().scheduler().scheduleOnce(Duration.ofMillis(new Random().nextInt(10)), getSelf(), "propose", getContext().system().dispatcher(), ActorRef.noSender());
+            getContext().system().scheduler().scheduleOnce(Duration.ofMillis(random.nextInt(10)), self(), "propose", getContext().system().dispatcher(), ActorRef.noSender());
         }
     }
 
@@ -163,7 +167,8 @@ public class Process extends UntypedAbstractActor {
         if (message instanceof Members) { //save the system's info
             Members m = (Members) message;
             this.processes = m;
-            //log.info("p" + self().path().name() + " received processes info");
+            // log.info("p" + self().path().name() + " received processes info");
+            Main.notifyDecision();
         }
 
         else if (message instanceof ReadMsg) {
@@ -190,7 +195,7 @@ public class Process extends UntypedAbstractActor {
             this.mayCrash();
             if(!this.silentMode){
                 ImposeMsg m = (ImposeMsg) message;
-                //log.info("impose received " + self().path().name() + " from " + getSender().path().name() + " with ballot " + m.ballot + " and proposal " + m.proposal);
+                // log.info("impose received from " + getSender().path().name() + " with ballot " + m.ballot + " and proposal " + m.proposal +" (imposeballot " + this.imposeballot+")" + " (readballot " + this.readballot + ")");
                 if (this.imposeballot>m.ballot || this.readballot>m.ballot){
                     this.mayCrash();
                     getSender().tell(new AbortMsg(m.ballot), self());
@@ -214,7 +219,7 @@ public class Process extends UntypedAbstractActor {
         else if(message instanceof CrashMsg){
             CrashMsg m = (CrashMsg) message;
             this.alpha = m.alpha;
-            //log.info("p" + self().path().name() + " entered fault-prone mode");
+            // log.info("p" + self().path().name() + " entered fault-prone mode");
             this.faultprone = true;
         }
 
@@ -225,7 +230,7 @@ public class Process extends UntypedAbstractActor {
 
             if(m.equals("launch")) {
                 randomValue = new Random().nextInt(2);
-                log.info("p" + self().path().name() + " proposes : " + randomValue);
+                // log.info("p" + self().path().name() + " proposes : " + randomValue);
                 propose(randomValue);
             }
 
@@ -238,31 +243,18 @@ public class Process extends UntypedAbstractActor {
             }
 
             if(m.equals("hold")){
+                // log.info("p" + self().path().name() + " hold");
                 this.proposemode = false;
             }
 
             if(m.equals("propose")){
-                if(this.proposemode){
-                    //log.info("p" + self().path().name() + " proposes : " + this.randomValue);
+                if(this.proposemode && !this.silentMode){
+                    // log.info("p" + self().path().name() + " proposes : " + this.randomValue);
                     propose(this.randomValue);
 
                 }
             }
 
-            if(m.equals("reset")){
-
-                log.info("p" + self().path().name() + " reset");
-                this.abortList.clear();
-                this.states.clear();
-                this.ackMajorityMap.clear();
-                this.silentMode = false;
-                this.faultprone = false;
-                this.alpha = 0;
-                this.proposemode = true;
-                this.readballot = 0;
-                this.imposeballot = id - N;
-                this.ballot = id - N;
-            }
         }
 
 
@@ -271,7 +263,7 @@ public class Process extends UntypedAbstractActor {
     private void decideReceived(int newProposal) {
         this.mayCrash();
         if(!silentMode){
-            log.info("decide received with proposal "+ newProposal + " from " + getSender().path().name());
+            // log.info("decide received with proposal "+ newProposal + " from " + getSender().path().name());
 
             for (ActorRef m : this.processes.references){
                 if(m != self()){
@@ -281,8 +273,8 @@ public class Process extends UntypedAbstractActor {
             }
             silentMode = true;
             this.proposemode = false;
-            log.info("\n-------------------------------------\n" + //
-                                "p" + self().path().name() + " DECIDED " + newProposal + "\n" + "--------------------------------");
+            // log.info("\n-------------------------------------\n" + //
+                                // "p" + self().path().name() + " DECIDED " + newProposal + "\n" + "--------------------------------");
 
             Main.notifyDecision();
 
@@ -293,7 +285,7 @@ public class Process extends UntypedAbstractActor {
 
     private void ackMajorityReceived() {
     if(!this.silentMode){
-        log.info("ackmajority received with ballot " + this.ballot);
+        // log.info("ackmajority received with ballot " + this.ballot);
 
 
         for (ActorRef m : this.processes.references){
@@ -301,6 +293,20 @@ public class Process extends UntypedAbstractActor {
             m.tell(new DecideMsg(this.proposal), self());
         }
     }
-    Main.notifyDecision();
+    }
+
+
+    public void reset(){
+                // log.info("p" + self().path().name() + " reset");
+                this.abortList.clear();
+                this.states.clear();
+                this.ackMajorityMap.clear();
+                this.silentMode = false;
+                this.faultprone = false;
+                this.alpha = 0;
+                this.proposemode = true;
+                this.readballot = 0;
+                this.imposeballot = id - N;
+                this.ballot = id - N;
     }
 }

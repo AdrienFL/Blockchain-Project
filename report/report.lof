@@ -1,11 +1,6 @@
 \contentsline {figure}{\numberline {1}{\ignorespaces Sequence diagram of the Akka design\relax }}{4}{}%
-\contentsline {figure}{\numberline {2}{\ignorespaces Performance analysis for a fix timeout\relax }}{7}{}%
-\contentsline {figure}{\numberline {3}{\ignorespaces Latency comparison for a fix timeout\relax }}{7}{}%
-\contentsline {figure}{\numberline {4}{\ignorespaces Performance analysis for a fix number of processes\relax }}{9}{}%
-\contentsline {figure}{\numberline {5}{\ignorespaces Latency comparison for a fix number of processes\relax }}{9}{}%
-\contentsline {figure}{\numberline {6}{\ignorespaces Performance analysis for \( N = 3 \)\relax }}{10}{}%
-\contentsline {figure}{\numberline {7}{\ignorespaces Latency comparison for \( N = 3 \)\relax }}{10}{}%
-\contentsline {figure}{\numberline {8}{\ignorespaces Performance analysis for \( N = 10 \)\relax }}{11}{}%
-\contentsline {figure}{\numberline {9}{\ignorespaces Latency comparison for \( N = 10 \)\relax }}{11}{}%
-\contentsline {figure}{\numberline {10}{\ignorespaces Performance analysis for \( N = 100 \)\relax }}{12}{}%
-\contentsline {figure}{\numberline {11}{\ignorespaces Latency comparison for \( N = 100 \)\relax }}{12}{}%
+\contentsline {figure}{\numberline {2}{\ignorespaces Mean latency comparison for fixed timeout and alpha values and different number of processes\relax }}{6}{}%
+\contentsline {figure}{\numberline {3}{\ignorespaces Mean latency comparison for fixed number of processes and alpha values\relax }}{7}{}%
+\contentsline {figure}{\numberline {4}{\ignorespaces Mean latency for \( N = 3 \)\relax }}{8}{}%
+\contentsline {figure}{\numberline {5}{\ignorespaces Mean latency for \( N = 10 \)\relax }}{9}{}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Mean latency for \( N = 100 \)\relax }}{10}{}%

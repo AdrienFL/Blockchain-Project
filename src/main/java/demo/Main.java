@@ -18,9 +18,10 @@ public class Main {
     static ActorSystem system = null;
     private static final Random rd = new Random();
     private static CountDownLatch latch;
+    public static ArrayList<Process> processes = new ArrayList<>();
 
-    private static int  N = 100; // Number of processes
-    private static int f = 49; // Number of faulty processes
+    private static int  N = 3; // Number of processes
+    private static int f = 1; // Number of faulty processes
 
     public static void main(String[] args) throws InterruptedException, IOException {
         File file = new File("time.csv");
@@ -37,7 +38,16 @@ public class Main {
         double alpha[] = new double[] { 0, 0.1, 1. };
 
 
+        latch = new CountDownLatch(N);
         ArrayList<ActorRef> references = initSystem(N);
+        latch.await(); // Wait for all actors to be initialized
+        system.log().info("All actors initialized");
+
+        // Warm-up round
+        system.log().info("Starting warm-up round...");
+        cons(references, f, N, 500, 0.0); // Use default parameters for warm-up
+        system.log().info("Warm-up round completed.");
+
         for (int j = 0; j < tl.length; j++) {
             for (int k = 0; k < alpha.length; k++) {
                     cons(references,f, N,tl[j], alpha[k]);
@@ -92,9 +102,16 @@ public class Main {
             system.log().info("\n-------------------------------------------------Starting consensus for N=" + N + ", tl=" + tl + ", alpha=" + alpha+"-------------------------------------------------\n");
             Collections.shuffle(references);
             // crash some processes
-            for (int j = 0; j < rd.nextInt(f); j++) {
-                references.get(i).tell(new CrashMsg(alpha), ActorRef.noSender());
+            for (int j = 0; j < f; j++) {
+                references.get(j).tell(new CrashMsg(alpha), ActorRef.noSender());
             }
+
+            try {
+                Thread.sleep(1000 + tl);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } // Sleep for 1 second to allow processes to crash
 
             long start = System.currentTimeMillis();
 
@@ -102,10 +119,10 @@ public class Main {
                 actor.tell("launch", ActorRef.noSender());
             }
 
-            ActorRef leader = references.get(rd.nextInt(N));
+            ActorRef leader = references.get(rd.nextInt(N - f) + f); // Randomly select a leader from the non-faulty processes
             for (ActorRef actor : references) {
                 if (actor != leader) {
-                    system.scheduler().scheduleOnce(Duration.ofMillis(tl), actor, "foo", system.dispatcher(), null);
+                    system.scheduler().scheduleOnce(Duration.ofMillis(tl), actor, "hold", system.dispatcher(), ActorRef.noSender());
                 }
             }
 
@@ -119,9 +136,17 @@ public class Main {
             times[i] = System.currentTimeMillis() - start;
 
             system.log().info("\n-------------------------------------------------------------Consensus reached for N=" + N + ", tl=" + tl + ", alpha=" + alpha + "-------------------------------------------------------------\n");
-            for (ActorRef actor : references) {
-                actor.tell("reset", ActorRef.noSender());
+
+            try {
+                Thread.sleep(1000 + tl);
+            } catch (InterruptedException e) {
+                system.log().error("Error sleeping: " + e.getMessage());
+            } // Sleep for 1 second to allow processes to reset
+            //reset the processes
+            for (Process p : processes) {
+                p.reset();
             }
+
 
         }
 
