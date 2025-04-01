@@ -46,21 +46,18 @@ For our implementation with Java and the Akka framework, we have created the fol
 
     \item \texttt{DecideMsg}: The class that represents the decide message sent between the processes.
 
-<<<<<<< HEAD
     \item \texttt{WriteAck}: The class that represents the write acknowledgments sent between the processes.
 
     \item \texttt{Pair}: Used to store (est and estballot) the values inside the states map.
-=======
     \item \texttt{GatherMsg}: The class that represents the GATHER message sent between the processes.
     
     \item \texttt{ImposeMsg}: The class that represents the IMPOSE message sent between the processes.
     
     \item \texttt{Members}: The class that contains the processes' references.
     
-    \item \texttt{Pair}:  
+    \item \texttt{Pair}:  The class that represents a pair of values (est and estballot) used in the states map.
     
     \item \texttt{ReadMsg}: The class that represents the read message sent between the processes.
->>>>>>> dfae84afdc827d709ce7c7ad865634d71e9b5d29
 \end{itemize}
 
 We didn't want to use multiple threads in the \texttt{Process} class due to the large number of processes
