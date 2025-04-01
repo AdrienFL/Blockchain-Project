@@ -23,10 +23,15 @@
 
 \newpage
 
-\section{Why Paxos?}
-Paxos is a consensus algorithm that allows a group of processes to agree on a single value, even in the presence of failures. It is designed to work in asynchronous distributed systems, where processes may fail or messages may be lost. Paxos is widely used in distributed systems for achieving fault tolerance and ensuring consistency.
-The algorithm is based on the idea of a "proposer" that suggests a value, "acceptors" that vote on the proposed value, and "learners" that learn the agreed-upon value. The algorithm ensures that even if some processes fail, as long as a majority of processes are functioning, they can still reach consensus.
-Paxos is particularly useful in scenarios where a distributed system needs to maintain a consistent state across multiple nodes, such as in databases, distributed file systems, and cloud computing platforms. It provides a robust and reliable way to achieve consensus, making it a popular choice for building fault-tolerant distributed systems.
+\section{Statement of the problem}
+
+Paxos solves Obstruction Free Consensus which has the following properties: 
+\begin{itemize}
+    \item \textbf{Obstruction Free Termination}: 1. If a correct process p proposes, it eventually decides or aborts.
+    2. If a correct process decides, no correct process aborts infinitely often.
+    3. If there is a time after which a single correct process p proposes a value sufficiently often, then p eventually decides.
+    \item \textbf{Agreement}: No two processes decide differentely.
+    \item \textbf{Validity}: Every decided value is a proposed value.
 
 \section{Java Implementation of the Robust Key-Value Store}
 
