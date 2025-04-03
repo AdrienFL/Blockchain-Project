@@ -1,4 +1,5 @@
 package demo;
+
 public class ReadMsg {
 
     public final int ballot;
@@ -6,5 +7,5 @@ public class ReadMsg {
     public ReadMsg(int ballot) {
         this.ballot = ballot;
     }
-        
+
 }

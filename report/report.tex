@@ -23,15 +23,12 @@
 
 \newpage
 
-\section{Statement of the problem}
+\section{Why Paxos?}
+Paxos is a consensus algorithm that allows a group of processes to agree on a single value, even in the presence of failures. It is designed to work in asynchronous distributed systems, where processes may fail or messages may be lost. Paxos is widely used in distributed systems for achieving fault tolerance and ensuring consistency.
+The algorithm is based on the idea of "proposers" that suggest values, "acceptors" that vote on one of the proposed values, and "learners" that learn the agreed-upon value. The algorithm ensures that even if some processes fail, as long as a majority of processes are functioning, they can still reach consensus.
+Paxos is particularly useful in scenarios where a distributed system needs to maintain a consistent state across multiple nodes, such as in databases, distributed file systems, and cloud computing platforms. It provides a robust and reliable way to achieve consensus, making it a popular choice for building fault-tolerant distributed systems.
 
-Paxos solves Obstruction Free Consensus which has the following properties: 
-\begin{itemize}
-    \item \textbf{Obstruction Free Termination}: 1. If a correct process p proposes, it eventually decides or aborts.
-    2. If a correct process decides, no correct process aborts infinitely often.
-    3. If there is a time after which a single correct process p proposes a value sufficiently often, then p eventually decides.
-    \item \textbf{Agreement}: No two processes decide differentely.
-    \item \textbf{Validity}: Every decided value is a proposed value.
+Contention in distributed systems refers to the competition between multiple processes or nodes for shared resources, such as network bandwidth, CPU cycles, or access to a shared data store. High contention can lead to delays, reduced throughput, and increased latency, as processes must wait for access to the resource. Managing contention is critical for ensuring the efficiency and scalability of distributed systems, especially in scenarios where multiple processes attempt to perform operations simultaneously.
 
 \section{Java Implementation of the Robust Key-Value Store}
 
@@ -51,62 +48,61 @@ For our implementation with Java and the Akka framework, we have created the fol
 
     \item \texttt{DecideMsg}: The class that represents the decide message sent between the processes.
 
-    \item \texttt{WriteAck}: The class that represents the write acknowledgments sent between the processes.
-
-    \item \texttt{Pair}: Used to store (est and estballot) the values inside the states map.
     \item \texttt{GatherMsg}: The class that represents the GATHER message sent between the processes.
-    
+
     \item \texttt{ImposeMsg}: The class that represents the IMPOSE message sent between the processes.
-    
+
     \item \texttt{Members}: The class that contains the processes' references.
-    
-    \item \texttt{Pair}:  The class that represents a pair of values (est and estballot) used in the states map.
-    
+
+    \item \texttt{Pair}:
+
     \item \texttt{ReadMsg}: The class that represents the read message sent between the processes.
 \end{itemize}
 
 We didn't want to use multiple threads in the \texttt{Process} class due to the large number of processes
 being launched. It is more efficient to let the Akka framework's logic thread handle the processes.
-% Therefore, we implemented a state machine in the \texttt{Process} class to manage the different states
-% of the functions: sending the initial read request, waiting for a quorum of responses, sending the
-% write request, and finally, waiting for a quorum of write acknowledgments.
+Therefore, we implemented a state machine in the \texttt{Process} class to manage the different states
+of the functions: sending the initial read request, waiting for a quorum of responses, sending the
+write request, and finally, waiting for a quorum of write acknowledgments.
 
 
 \newpage
 \subsection{Akka Design}
 
 \begin{figure}[h!]
-\centering
+    \centering
 
-\begin{sequencediagram}
-    \newthread{main}{main}
-    \newinst{a}{Correct Process  A}
-    \newinst[1]{b}{Correct Process B}
-    \newinst[1]{c}{Failed Process C}
+    \begin{sequencediagram}
+        \newthread{main}{main}
+        \newinst{a}{Correct Process  A}
+        \newinst[1]{b}{Correct Process B}
+        \newinst[1]{c}{Failed Process C}
 
-    \mess{main}{refs}{a}
-    \mess{main}{refs}{b}
-    \mess{main}{refs}{c}
-    \mess{main}{crash}{c}
-    \mess{main}{launch}{a}
-    \mess{main}{launch}{b}
-    \begin{sdblock}{write}{B Writes}
-        \begin{call}{b}{Read request}{a}{Read response (ts)}
-        \end{call}
-        \begin{call}{b}{Write request (val, ts)}{a}{Write ack}
-        \end{call}
-    \end{sdblock}
-    \begin{sdblock}{read}{A reads}
-        \begin{call}{a}{Read request}{b}{Read response (val, ts)}
-        \end{call}
-        \begin{call}{a}{Write request (val, ts)}{b}{Write ack}
-        \end{call}
-    \end{sdblock}
-    \mess{a}{done, stats}{main}
-    \mess{b}{done, stats}{main}
-\end{sequencediagram}
+        \mess{main}{refs}{a}
+        \mess{main}{refs}{b}
+        \mess{main}{refs}{c}
+        \mess{main}{crash}{c}
+        \mess{main}{launch}{a}
+        \mess{main}{launch}{b}
+        \begin{sdblock}{write}{B Writes}
+            \begin{call}{b}{Read request}{a}{Read response (ts)}
+            \end{call}
+            \begin{call}{b}{Write request (val, ts)}{a}{Write ack}
+            \end{call}
 
-\caption{Sequence diagram of the Akka design}
+
+        \end{sdblock}
+        \begin{sdblock}{read}{A reads}
+            \begin{call}{a}{Read request}{b}{Read response (val, ts)}
+            \end{call}
+            \begin{call}{a}{Write request (val, ts)}{b}{Write ack}
+            \end{call}
+        \end{sdblock}
+        \mess{a}{done, stats}{main}
+        \mess{b}{done, stats}{main}
+    \end{sequencediagram}
+
+    \caption{Sequence diagram of the Akka design}
 \end{figure}
 \newpage
 \subsection{Statistics computation}
@@ -126,7 +122,7 @@ the statistics. At the end of the simulation, the main class will compute this d
 
 For the throughput, we have used the formula :
 $$
-\text{Throughput} = \frac{\text{Number of operations}}{\text{Total time}}
+    \text{Throughput} = \frac{\text{Number of operations}}{\text{Total time}}
 $$
 
 \newpage
@@ -150,446 +146,258 @@ Let's now analyze the results for a fixed timeout $t_{le}$ and different values 
 \begin{figure}[h!]
     \centering
     \begin{subfigure}{0.55\textwidth}
-    \begin{tikzpicture}
-        \begin{axis}[
-            xlabel={Number of processes},
-            ylabel={Throughput (op/s)},
-            xtick=data,
-            symbolic x coords={3, 10, 100},
-            ymin=0, ymax=800,
-            ymajorgrids=true,
-            grid style=dashed
-        ]
-        \addplot coordinates {(3, 409.09) (10, 468.75) (100, 737.10)};
-        \addlegendentry{$t_{le} = 0.5$}
-        \addplot coordinates {(3, 333.33) (10, 416.67) (100, 666.67)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(3, 285.71) (10, 357.14) (100, 571.43)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(3, 250) (10, 333.33) (100, 500)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Throughput comparison }
-\end{subfigure}%
-\begin{subfigure}{.55\textwidth}
-    \begin{tikzpicture}
-        \begin{axis}[
-            xlabel={Number of processes},
-            ylabel={Time per operation (ms)},
-            xtick=data,
-            symbolic x coords={3, 10, 100},
-            ymin=0, ymax=40,
-            ymajorgrids=true,
-            grid style=dashed
-        ]
-        \addplot coordinates {(3, 1) (10, 4) (100, 35)};
-        \addlegendentry{$t_{le} = 0.5$}
-
-        \addplot coordinates {(3, 1) (10, 5) (100, 26)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(3, 1) (10, 6) (100, 16)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(3, 1) (10, 7) (100, 13)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Operation execution time comparison}
-\end{subfigure}
-
-\caption{Performance analysis for a fix timeout}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    xlabel={Number of processes},
+                    ylabel={Mean Latency (ms)},
+                    xtick=data,
+                    symbolic x coords={3, 10, 100},
+                    ymin=0, ymax=6,
+                    ymajorgrids=true,
+                    grid style=dashed
+                ]
+                \addplot coordinates {(3, 0.4) (10, 0.5) (100, 4.9)};
+                \addlegendentry{$t_{le} = 0.5s$}
+                \addplot coordinates {(3, 0.6) (10, 0.3) (100, 3.7)};
+                \addlegendentry{$t_{le} = 1s$}
+                \addplot coordinates {(3, 0.2) (10, 0.3) (100, 0.9)};
+                \addlegendentry{$t_{le} = 1.5s$}
+                \addplot coordinates {(3, 0.0) (10, 0.2) (100, 5.1)};
+                \addlegendentry{$t_{le} = 2s$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Mean latency comparison for $\alpha = 0$}
+    \end{subfigure}%
+    \begin{subfigure}{.55\textwidth}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    xlabel={Number of processes},
+                    ylabel={Mean Latency (ms)},
+                    xtick=data,
+                    symbolic x coords={3, 10, 100},
+                    ymin=0, ymax=6,
+                    ymajorgrids=true,
+                    grid style=dashed
+                ]
+                \addplot coordinates {(3, 0.3) (10, 0.4) (100, 1.3)};
+                \addlegendentry{$t_{le} = 0.5s$}
+                \addplot coordinates {(3, 0.5) (10, 0.1) (100, 0.4)};
+                \addlegendentry{$t_{le} = 1s$}
+                \addplot coordinates {(3, 0.3) (10, 0.4) (100, 1.1)};
+                \addlegendentry{$t_{le} = 1.5s$}
+                \addplot coordinates {(3, 0.2) (10, 0.3) (100, 0.3)};
+                \addlegendentry{$t_{le} = 2s$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Mean latency comparison for $\alpha = 0.1$}
+    \end{subfigure}
+    \begin{subfigure}{.55\textwidth}
+        \vspace{1cm}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    xlabel={Number of processes},
+                    ylabel={Mean Latency (ms)},
+                    xtick=data,
+                    symbolic x coords={3, 10, 100},
+                    ymin=0, ymax=6,
+                    ymajorgrids=true,
+                    grid style=dashed
+                ]
+                \addplot coordinates {(3, 2.3) (10, 0.7) (100, 2.8)};
+                \addlegendentry{$t_{le} = 0.5s$}
+                \addplot coordinates {(3, 0.1) (10, 2.7) (100, 1.0)};
+                \addlegendentry{$t_{le} = 1s$}
+                \addplot coordinates {(3, 0.5) (10, 0.2) (100, 0.9)};
+                \addlegendentry{$t_{le} = 1.5s$}
+                \addplot coordinates {(3, 2.7) (10, 0.4) (100, 0.5)};
+                \addlegendentry{$t_{le} = 2s$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Mean latency comparison for $\alpha = 1$}
+    \end{subfigure}
+    \caption{Mean latency comparison for fixed timeout and alpha values and different number of processes}
 \end{figure}
-
-\begin{figure}[ht!]
-    \centering
-    \begin{tikzpicture}[scale=0.9]
-        \begin{axis}[
-            xlabel={Number of processes},
-            ylabel={Latency (s)},
-            xtick=data,
-            symbolic x coords={3, 10, 100},
-            ymin=0, ymax=2,
-            ymajorgrids=true,
-            grid style=dashed,
-        ]
-        \addplot coordinates {(3, 0.022) (10, 0.064) (100, 0.407)};
-        \addlegendentry{$t_{le} = 0.5$}
-        \addplot coordinates {(3, 0.022) (10, 0.064) (100, 0.229)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(3, 0.022) (10, 0.064) (100, 0.1)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(3, 0.022) (10, 0.064) (100, 0.064)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Latency comparison for a fix timeout}
-\end{figure}
-
-
-% We can observe that throughput increases with the number of processes. However,
-% the growth factor is not linear. Adding a significantly larger number of processes
-% does not lead to a substantial increase in throughput, as there are not many
-% operations per process to execute.
-
-% Similarly, the time required to complete an operation increases with the number
-% of processes. This is because processes must wait for a majority of responses
-% to proceed. As the number of processes grows, it takes more time to gather a
-% majority of responses.
-
-% One reason the time taken to complete a write operation is longer than for a
-% read operation is that, during a read, some processes may have already completed
-% their operations. The network might also be less congested, allowing processes
-% to receive a majority of responses more quickly.
-
-% \vspace{10pt}
-% The results are consistent for the other values of
-% $M$: both throughput and the time taken to complete an operation
-% increase with the number of processes. However, the more operations
-% there are per process, the better the performance of the system with
-%  100 processes running, though some latency remains.
+Since consensus is reached before the call to \textit{hold}, the differences in the \( t_{le} \) values do not significantly impact performance. In a larger system, having a timeout is very useful, because it allows the system to still be able to reach a consensus by reducing the number of proposing process to only one.
+The choice of timeout should balance failure detection and system stability. A timeout that is too long delays the election of a new leader when a failure occurs, increasing recovery time. On the other hand, a well-chosen timeout ensures that the system remains responsive without unnecessary leader use.
 
 \newpage
 
-\subsection{Results for a fix number of processes}
-Let's first analyze the results for a fix number of processes $N$ and different values of $t_{le}$.
+\subsection{Results for a fixed number of processes}
+Let's first analyze the results for a fixed number of processes $N$ and different values of $t_{le}$.
 
 \begin{figure}[h!]
     \centering
     \begin{subfigure}{0.55\textwidth}
-    \begin{tikzpicture}
-        \begin{axis}[
-            xlabel={Timeout (s)},
-            ylabel={Throughput (op/s)},
-            xtick=data,
-            symbolic x coords={0.5, 1, 1.5, 2},
-            ymin=0, ymax=2000,
-            ymajorgrids=true,
-            grid style=dashed
-        ]
-        \addplot coordinates {(0.5, 1000) (1, 1150) (1.5, 1500) (2, 2000)};
-        \addlegendentry{N = 3}
-        \addplot coordinates {(0.5, 1000) (1, 1150) (1.5, 1500) (2, 2000)};
-        \addlegendentry{N = 10}
-        \addplot coordinates {(0.5, 1000) (1, 1150) (1.5, 1500) (2, 2000)};
-        \addlegendentry{N = 100}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Throughput comparison }
-\end{subfigure}%
-\begin{subfigure}{.55\textwidth}
-    \begin{tikzpicture}
-        \begin{axis}[
-            xlabel={Timeout (s)},
-            ylabel={Time per operation (ms)},
-            xtick=data,
-            symbolic x coords={0.5, 1, 1.5, 2},
-            ymin=0, ymax=40,
-            ymajorgrids=true,
-            grid style=dashed
-        ]
-        \addplot coordinates {(0.5, 1) (1, 2) (1.5, 3) (2, 4)};
-        \addlegendentry{N = 3}
-
-        \addplot coordinates {(0.5, 1) (1, 2) (1.5, 3) (2, 4)};
-        \addlegendentry{N = 10}
-
-        \addplot coordinates {(0.5, 1) (1, 2) (1.5, 3) (2, 4)};
-        \addlegendentry{N = 100}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Operation execution time comparison}
-\end{subfigure}
-\caption{Performance analysis for a fix number of processes}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    xlabel={Timeout (s)},
+                    ylabel={Mean Latency (ms)},
+                    xtick=data,
+                    symbolic x coords={0.5, 1, 1.5, 2},
+                    ymin=0, ymax=6,
+                    ymajorgrids=true,
+                    grid style=dashed
+                ]
+                \addplot coordinates {(0.5, 0.4) (1, 0.6) (1.5, 0.2) (2, 0.0)};
+                \addlegendentry{$N = 3$}
+                \addplot coordinates {(0.5, 0.5) (1, 0.3) (1.5, 0.3) (2, 0.2)};
+                \addlegendentry{$N = 10$}
+                \addplot coordinates {(0.5, 4.9) (1, 3.7) (1.5, 0.9) (2, 5.1)};
+                \addlegendentry{$N = 100$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Mean latency comparison for $\alpha = 0$}
+    \end{subfigure}%
+    \begin{subfigure}{.55\textwidth}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    xlabel={Timeout (s)},
+                    ylabel={Mean Latency (ms)},
+                    xtick=data,
+                    symbolic x coords={0.5, 1, 1.5, 2},
+                    ymin=0, ymax=6,
+                    ymajorgrids=true,
+                    grid style=dashed
+                ]
+                \addplot coordinates {(0.5, 0.3) (1, 0.5) (1.5, 0.3) (2, 0.2)};
+                \addlegendentry{$N = 3$}
+                \addplot coordinates {(0.5, 0.4) (1, 0.1) (1.5, 0.4) (2, 0.3)};
+                \addlegendentry{$N = 10$}
+                \addplot coordinates {(0.5, 1.3) (1, 0.4) (1.5, 1.1) (2, 0.3)};
+                \addlegendentry{$N = 100$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Mean latency comparison for $\alpha = 0.1$}
+    \end{subfigure}
+    \begin{subfigure}{.55\textwidth}
+        \vspace{1cm}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    xlabel={Timeout (s)},
+                    ylabel={Mean Latency (ms)},
+                    xtick=data,
+                    symbolic x coords={0.5, 1, 1.5, 2},
+                    ymin=0, ymax=6,
+                    ymajorgrids=true,
+                    grid style=dashed
+                ]
+                \addplot coordinates {(0.5, 2.3) (1, 0.1) (1.5, 0.5) (2, 2.7)};
+                \addlegendentry{$N = 3$}
+                \addplot coordinates {(0.5, 0.7) (1, 2.7) (1.5, 0.2) (2, 0.4)};
+                \addlegendentry{$N = 10$}
+                \addplot coordinates {(0.5, 2.8) (1, 1.0) (1.5, 0.9) (2, 0.5)};
+                \addlegendentry{$N = 100$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Mean latency comparison for $\alpha = 1$}
+    \end{subfigure}
+    \caption{Mean latency comparison for fixed number of processes and alpha values}
 \end{figure}
 
-\begin{figure}[ht!]
-    \centering
-    \begin{tikzpicture}[scale=0.9]
-        \begin{axis}[
-            xlabel={Timeout (s)},
-            ylabel={Latency (s)},
-            xtick=data,
-            symbolic x coords={0.5, 1, 1.5, 2},
-            ymin=0, ymax=2,
-            ymajorgrids=true,
-            grid style=dashed,
-        ]
-        \addplot coordinates {(0.5, 0.022) (1, 0.064) (1.5, 0.1) (2, 0.2)};
-        \addlegendentry{N = 3}
-
-        \addplot coordinates {(0.5, 0.022) (1, 0.064) (1.5, 0.1) (2, 0.2)};
-        \addlegendentry{N = 10}
-
-        \addplot coordinates {(0.5, 0.022) (1, 0.064) (1.5, 0.1) (2, 0.2)};
-        \addlegendentry{N = 100}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Latency comparison for a fix number of processes}
-\end{figure}
-
-% We can observe that throughput increases with the number of operations
-% per process, while the time taken to complete an operation remains almost constant.
-
-% Although we cannot compute many operations in parallel, the throughput
-% remains high because the quorum is reached almost instantaneously.
+We can see here that the latency increases as the number of processes grows. This is due to the required quorum size needed to reach consensus. However, while having fewer processes can be faster, it is hardly scalable for more general use cases where a high number of requests may occur. With too few processes, the system risks overloading. Furthermore, with more processes, and given that at least
+$ \frac{N}{2} + 1$ correct processes are required, the system can tolerate a higher number of failures.
 
 \newpage
 
 \subsection{Results for the probability of failure}
-Let's now analyze the results for fix numbers of processes $N$ and timeout $t_{le}$, with different probabilities of failure $\alpha$.
-
-\subsubsection{Results for \(N = 3\) and \(f = 1\)}
+Let's now analyze the results for fixed numbers of processes $N$ and timeout $t_{le}$, with different probabilities of failure $\alpha$.
 
 \begin{figure}[h!]
-    \centering
     \begin{subfigure}{0.55\textwidth}
-    \begin{tikzpicture}
-        \begin{axis}[
-            xlabel={Probability of failures},
-            ylabel={Throughput (op/s)},
-            xtick=data,
-            symbolic x coords={0, 0.1, 1},
-            ymin=0, ymax=2000,
-            ymajorgrids=true,
-            grid style=dashed
-        ]
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 0.5$}
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Throughput comparison }
-\end{subfigure}%
-\begin{subfigure}{.55\textwidth}
-    \begin{tikzpicture}
-        \begin{axis}[
-            xlabel={Probability of failures},
-            ylabel={Time per operation (ms)},
-            xtick=data,
-            symbolic x coords={0, 0.1, 1},
-            ymin=0, ymax=40,
-            ymajorgrids=true,
-            grid style=dashed
-        ]
-        \addplot coordinates {(0, 4) (0.1, 5) (1, 6)};
-        \addlegendentry{$t_{le} = 0.5$}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    xlabel={Probability of failures ($\alpha$)},
+                    ylabel={Mean Latency (ms)},
+                    xtick=data,
+                    symbolic x coords={0, 0.1, 1},
+                    ymin=0, ymax=3,
+                    ymajorgrids=true,
+                    grid style=dashed
+                ]
+                \addplot coordinates {(0, 0.4) (0.1, 0.3) (1, 2.3)};
+                \addlegendentry{$N = 3$}
+                \addplot coordinates {(0, 0.5) (0.1, 0.4) (1, 0.7)};
+                \addlegendentry{$N = 10$}
+                \addplot coordinates {(0, 4.9) (0.1, 1.3) (1, 2.8)};
+                \addlegendentry{$N=100$}
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Mean latency for $t_{le} = 0.5s$}
 
-        \addplot coordinates {(0, 5) (0.1, 6) (1, 7)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(0, 6) (0.1, 7) (1, 8)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(0, 7) (0.1, 8) (1, 9)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Operation execution time comparison}
-\end{subfigure}
-\caption{Performance analysis for \( N = 3 \)}
+    \end{subfigure}%
+    \begin{subfigure}{.55\textwidth}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    xlabel={Probability of failures ($\alpha$)},
+                    ylabel={Mean Latency (ms)},
+                    xtick=data,
+                    symbolic x coords={0, 0.1, 1},
+                    ymin=0, ymax=3,
+                    ymajorgrids=true,
+                    grid style=dashed
+                ]
+                \addplot coordinates {(0, 0.6) (0.1, 0.5) (1, 0.1)};
+                \addlegendentry{$N = 3$}
+                \addplot coordinates {(0, 0.3) (0.1, 0.1) (1, 2.7)};
+                \addlegendentry{$N = 10$}
+                \addplot coordinates {(0, 3.7) (0.1, 0.4) (1, 1.0)};
+                \addlegendentry{$N=100$}
+            \end{axis}
+        \end{tikzpicture}
+
+        \caption{Mean latency for $t_{le} = 1s$}
+    \end{subfigure}
+    \begin{subfigure}{.55\textwidth}
+        \vspace{1cm}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    xlabel={Probability of failures ($\alpha$)},
+                    ylabel={Mean Latency (ms)},
+                    xtick=data,
+                    symbolic x coords={0, 0.1, 1},
+                    ymin=0, ymax=6,
+                    ymajorgrids=true,
+                    grid style=dashed
+                ]
+
+                \addplot coordinates {(0, 0.2) (0.1, 0.3) (1, 0.5)};
+                \addlegendentry{$N = 3$}
+                \addplot coordinates {(0, 0.3) (0.1, 0.4) (1, 0.2)};
+                \addlegendentry{$N = 10$}
+                \addplot coordinates {(0, 0.9) (0.1, 1.1) (1, 0.9)};
+                \addlegendentry{$N = 100$}
+
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Mean latency for $t_{le} = 1.5s$}
+    \end{subfigure}
+    \begin{subfigure}{.55\textwidth}
+        \vspace{1cm}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    xlabel={Probability of failures ($\alpha$)},
+                    ylabel={Mean Latency (ms)},
+                    xtick=data,
+                    symbolic x coords={0, 0.1, 1},
+                    ymin=0, ymax=6,
+                    ymajorgrids=true,
+                    grid style=dashed
+                ]
+
+                \addplot coordinates {(0, 0.0) (0.1, 0.2) (1, 2.7)};
+                \addlegendentry{$N = 3$}
+                \addplot coordinates {(0, 0.2) (0.1, 0.3) (1, 0.4)};
+                \addlegendentry{$N = 10$}
+                \addplot coordinates {(0, 5.1) (0.1, 0.3) (1, 0.5)};
+                \addlegendentry{$N = 100$}
+
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Mean latency for $t_{le} = 2s$}
+    \end{subfigure}
+    \caption{Mean latency comparison for fixed number of processes and alpha values}
 \end{figure}
 
-\begin{figure}[ht!]
-    \centering
-    \begin{tikzpicture}[scale=0.9]
-        \begin{axis}[
-            xlabel={Probability of failures},
-            ylabel={Latency (s)},
-            xtick=data,
-            symbolic x coords={0, 0.1, 1},
-            ymin=0, ymax=2,
-            ymajorgrids=true,
-            grid style=dashed,
-        ]
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 0.5$}
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Latency comparison for \( N = 3 \)}
-\end{figure}
-
-\newpage
-
-\subsubsection{Results for \(N = 10\) and \(f = 4\)}
-
-\begin{figure}[h!]
-    \centering
-    \begin{subfigure}{0.55\textwidth}
-    \begin{tikzpicture}
-        \begin{axis}[
-            xlabel={Probability of failures},
-            ylabel={Throughput (op/s)},
-            xtick=data,
-            symbolic x coords={0, 0.1, 1},
-            ymin=0, ymax=2000,
-            ymajorgrids=true,
-            grid style=dashed
-        ]
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 0.5$}
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Throughput comparison }
-\end{subfigure}%
-\begin{subfigure}{.55\textwidth}
-    \begin{tikzpicture}
-        \begin{axis}[
-            xlabel={Probability of failures},
-            ylabel={Time per operation (ms)},
-            xtick=data,
-            symbolic x coords={0, 0.1, 1},
-            ymin=0, ymax=40,
-            ymajorgrids=true,
-            grid style=dashed
-        ]
-        \addplot coordinates {(0, 4) (0.1, 5) (1, 6)};
-        \addlegendentry{$t_{le} = 0.5$}
-
-        \addplot coordinates {(0, 5) (0.1, 6) (1, 7)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(0, 6) (0.1, 7) (1, 8)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(0, 7) (0.1, 8) (1, 9)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Operation execution time comparison}
-\end{subfigure}
-\caption{Performance analysis for \( N = 10 \)}
-\end{figure}
-
-\begin{figure}[ht!]
-    \centering
-    \begin{tikzpicture}[scale=0.9]
-        \begin{axis}[
-            xlabel={Probability of failures},
-            ylabel={Latency (s)},
-            xtick=data,
-            symbolic x coords={0, 0.1, 1},
-            ymin=0, ymax=2,
-            ymajorgrids=true,
-            grid style=dashed,
-        ]
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 0.5$}
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Latency comparison for \( N = 10 \)}
-\end{figure}
-
-\newpage
-
-\subsubsection{Results for \(N = 100\) and \(f = 49\)}
-
-\begin{figure}[h!]
-    \centering
-    \begin{subfigure}{0.55\textwidth}
-    \begin{tikzpicture}
-        \begin{axis}[
-            xlabel={Probability of failures},
-            ylabel={Throughput (op/s)},
-            xtick=data,
-            symbolic x coords={0, 0.1, 1},
-            ymin=0, ymax=2000,
-            ymajorgrids=true,
-            grid style=dashed
-        ]
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 0.5$}
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(0, 1000) (0.1, 1150) (1, 1500)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Throughput comparison }
-\end{subfigure}%
-\begin{subfigure}{.55\textwidth}
-    \begin{tikzpicture}
-        \begin{axis}[
-            xlabel={Probability of failures},
-            ylabel={Time per operation (ms)},
-            xtick=data,
-            symbolic x coords={0, 0.1, 1},
-            ymin=0, ymax=40,
-            ymajorgrids=true,
-            grid style=dashed
-        ]
-        \addplot coordinates {(0, 4) (0.1, 5) (1, 6)};
-        \addlegendentry{$t_{le} = 0.5$}
-
-        \addplot coordinates {(0, 5) (0.1, 6) (1, 7)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(0, 6) (0.1, 7) (1, 8)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(0, 7) (0.1, 8) (1, 9)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Operation execution time comparison}
-\end{subfigure}
-\caption{Performance analysis for \( N = 100 \)}
-\end{figure}
-
-\begin{figure}[ht!]
-    \centering
-    \begin{tikzpicture}[scale=0.9]
-        \begin{axis}[
-            xlabel={Probability of failures},
-            ylabel={Latency (s)},
-            xtick=data,
-            symbolic x coords={0, 0.1, 1},
-            ymin=0, ymax=2,
-            ymajorgrids=true,
-            grid style=dashed,
-        ]
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 0.5$}
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 1$}
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 1.5$}
-        \addplot coordinates {(0, 0.064) (0.1, 0.064) (1, 0.064)};
-        \addlegendentry{$t_{le} = 2$}
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Latency comparison for \( N = 100 \)}
-\end{figure}
-
-\section{Conclusion}
-% In conclusion, we can say that the configuration with 3 processes is more
-% efficient for a small number of operations, while the configuration with 100
-% processes is more efficient for a large number of operations. The configuration
-% with 10 processes lies in between.
-
-% If we were to implement this system in a real-life scenario, we would need to
-% consider the number of operations to be processed and the acceptable latency.
-% Server characteristics and network capacity may also impose constraints that
-% influence the choice of the optimal configuration. The configuration with 10
-% processes could be a good compromise between the other two in many situations,
-% as it is sufficiently efficient for handling both small and large numbers of requests.
+We can see in this part that the latency increases as the probability of failure
+grows. This is due to the fact that the processes are more likely to fail, so they can't respond to reqyests and thus in order to reach a consensus, the process need to call all of the correct processes ($N/2 + 1$).
 \end{document}
-

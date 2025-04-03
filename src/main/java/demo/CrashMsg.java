@@ -1,6 +1,5 @@
 package demo;
 
-
 public class CrashMsg {
     public double alpha;
 
