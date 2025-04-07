@@ -7,6 +7,7 @@
 \usepackage{pgf-umlsd}
 \usepackage{pgfplots}
 \usepackage{geometry}
+\usepackage{hyperref}
 \geometry{
 	a4paper,
 	left=25.4mm,
@@ -23,12 +24,16 @@
 
 \newpage
 
-\section{Why Paxos?}
-Paxos is a consensus algorithm that allows a group of processes to agree on a single value, even in the presence of failures. It is designed to work in asynchronous distributed systems, where processes may fail or messages may be lost. Paxos is widely used in distributed systems for achieving fault tolerance and ensuring consistency.
-The algorithm is based on the idea of "proposers" that suggest values, "acceptors" that vote on one of the proposed values, and "learners" that learn the agreed-upon value. The algorithm ensures that even if some processes fail, as long as a majority of processes are functioning, they can still reach consensus.
-Paxos is particularly useful in scenarios where a distributed system needs to maintain a consistent state across multiple nodes, such as in databases, distributed file systems, and cloud computing platforms. It provides a robust and reliable way to achieve consensus, making it a popular choice for building fault-tolerant distributed systems.
+\section{Statement of the problem}
 
-Contention in distributed systems refers to the competition between multiple processes or nodes for shared resources, such as network bandwidth, CPU cycles, or access to a shared data store. High contention can lead to delays, reduced throughput, and increased latency, as processes must wait for access to the resource. Managing contention is critical for ensuring the efficiency and scalability of distributed systems, especially in scenarios where multiple processes attempt to perform operations simultaneously.
+Paxos solves Obstruction Free Consensus which has the following properties: 
+\begin{itemize}
+    \item \textbf{Obstruction Free Termination}: 1. If a correct process p proposes, it eventually decides or aborts.
+    2. If a correct process decides, no correct process aborts infinitely often.
+    3. If there is a time after which a single correct process p proposes a value sufficiently often, then p eventually decides.
+    \item \textbf{Agreement}: No two processes decide differentely.
+    \item \textbf{Validity}: Every decided value is a proposed value.
+\end{itemize}
 
 \section{Java Implementation of the Robust Key-Value Store}
 
@@ -48,14 +53,17 @@ For our implementation with Java and the Akka framework, we have created the fol
 
     \item \texttt{DecideMsg}: The class that represents the decide message sent between the processes.
 
+    \item \texttt{WriteAck}: The class that represents the write acknowledgments sent between the processes.
+
+    \item \texttt{Pair}: Used to store (est and estballot) the values inside the states map.
     \item \texttt{GatherMsg}: The class that represents the GATHER message sent between the processes.
-
+    
     \item \texttt{ImposeMsg}: The class that represents the IMPOSE message sent between the processes.
-
+    
     \item \texttt{Members}: The class that contains the processes' references.
-
-    \item \texttt{Pair}:
-
+    
+    \item \texttt{Pair}:  The class that represents a pair of values (est and estballot) used in the states map.
+    
     \item \texttt{ReadMsg}: The class that represents the read message sent between the processes.
 \end{itemize}
 
@@ -67,7 +75,9 @@ write request, and finally, waiting for a quorum of write acknowledgments.
 
 
 \newpage
-\subsection{Akka Design}
+\subsection{Akka Sequence Diagram}
+
+Let's consider an example of the case ($N=3$) in which only one process proposes and all 3 processes are correct processes.
 
 \begin{figure}[h!]
 \centering
@@ -75,55 +85,47 @@ write request, and finally, waiting for a quorum of write acknowledgments.
 \begin{sequencediagram}
     \newthread{main}{main}
     \newinst{a}{Correct Process  A}
-    \newinst[1]{b}{Correct Process B}
-    \newinst[1]{c}{Failed Process C}
+    \newinst[1]{b}{Correct Process B}   
+    \newinst[1]{c}{Correct Process C}
 
     \mess{main}{refs}{a}
     \mess{main}{refs}{b}
     \mess{main}{refs}{c}
-    \mess{main}{crash}{c}
     \mess{main}{launch}{a}
-    \mess{main}{launch}{b}
-    \begin{sdblock}{write}{B Writes}
-        \begin{call}{b}{Read request}{a}{Read response (ts)}
-        \end{call}
-        \begin{call}{b}{Write request (val, ts)}{a}{Write ack}
-        \end{call}
-
-
+    \begin{sdblock}{Read Phase}{}
+        \mess{a}{read}{a}
+        \mess{a}{read}{b}
+        \mess{a}{read}{c}
+        \mess{c}{gather}{a}
+        \mess{a}{gather}{a}
+        \mess{main}{majority reached}{a}    
+        \mess{b}{gather}{a}
+        
     \end{sdblock}
-    \begin{sdblock}{read}{A reads}
-        \begin{call}{a}{Read request}{b}{Read response (val, ts)}
-        \end{call}
-        \begin{call}{a}{Write request (val, ts)}{b}{Write ack}
-        \end{call}
+    \begin{sdblock}{Impose Phase}{}
+        \mess{a}{impose}{a}
+        \mess{a}{impose}{b}
+        \mess{a}{impose}{c}
+        \mess{a}{ack}{a}
+        \mess{c}{ack}{a}
+        
+        \mess{main}{ack majority reached}{a} 
+        \mess{a}{decide}{b}
+        \mess{a}{decide}{c}
+        \mess{b}{ack}{a}
     \end{sdblock}
-    \mess{a}{done, stats}{main}
-    \mess{b}{done, stats}{main}
+    
 \end{sequencediagram}
 
 \caption{Sequence diagram of the Akka design}
 \end{figure}
 \newpage
-\subsection{Statistics computation}
+\subsection{Test machine configuration}
+To compute the results, we used a laptop equipped with an AMD Ryzen 7 5800H processor, featuring 8 cores and 16 logical threads.
 
-TODO
+We also performed a warm-up round to minimize data aberrations caused by Java Virtual Machine (JVM) optimizations. However, we believe that some of our values may still be influenced by these optimizations.
 
-Throughout the simulation, the processes continuously collect data for
-the statistics. At the end of the simulation, the main class will compute this data:
-
-% \begin{itemize}
-%     \item The time taken for each process to complete a write operation.
-%     \item The time taken for each process to complete a read operation.
-%     \item The average time spend by a process to complete all the write operations.
-%     \item The average time spend by a process to complete all the read operations.
-%     \item The throughput of the system.
-% \end{itemize}
-
-For the throughput, we have used the formula :
-$$
-\text{Throughput} = \frac{\text{Number of operations}}{\text{Total time}}
-$$
+The source code can be found here : \href{https://github.com/AdrienFL/Blockchain-Project}{https://github.com/AdrienFL/Blockchain-Project}
 
 \newpage
 
@@ -399,6 +401,6 @@ Let's now analyze the results for fixed numbers of processes $N$ and timeout $t_
 \end{figure}
 
 We can see in this part that the latency increases as the probability of failure
-grows. This is due to the fact that the processes are more likely to fail, so they can't respond to reqyests and thus in order to reach a consensus, the process need to call all of the correct processes ($N/2 + 1$).
+grows. This is due to the fact that the processes are more likely to fail, so they can't respond to requests and thus in order to reach a consensus, the process need to call all of the correct processes ($\frac{N}{2} + 1$).
 \end{document}
 
